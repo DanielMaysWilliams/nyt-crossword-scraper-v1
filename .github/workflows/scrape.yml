@@ -18,7 +18,7 @@ jobs:
       - name: Remove default Chromium
         run: sudo apt purge chromium-browser
       - name: Install all necessary packages
-        run: pip install requests beautifulsoup4 pandas selenium transformers
+        run: pip install requests beautifulsoup4 pandas selenium transformers torch torchvision
       - name: Run the scraping script
         run: python scraper.py
       - name: Commit and push if content changed
