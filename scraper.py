@@ -1,8 +1,5 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromiumService
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service 
 
 from selenium.webdriver.common.by import By
 from transformers import pipeline
@@ -12,9 +9,8 @@ import datetime
 
 start = time.time()
 
-chrome_service = ChromiumService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
-
-chrome_options = Options()
+chrome_service = Service()
+chrome_options = webdriver.ChromeOptions()
 options = [
     "--headless",
     "--disable-gpu",
@@ -82,5 +78,7 @@ for comment in comments:
 
 df = pd.DataFrame(comment_dict)
 df.to_csv(f"comments_{today:%Y-%m-%d}.csv", index=False)
+
+driver.quit()
 
 print(f"Time: {time.time() - start} seconds")
