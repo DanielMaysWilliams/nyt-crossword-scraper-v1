@@ -28,7 +28,8 @@ driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
 sentiment_analyzer = pipeline("text-classification", model="cardiffnlp/twitter-roberta-base-sentiment-latest")
 
-today = datetime.date.today()
+# This script is run in a github action at 3:00 AM UTC, which is 10:00 PM EST the day before
+today = datetime.date.today() - datetime.timedelta(days=1)
 yesterday = today - datetime.timedelta(days=1)
 
 print(f"{today=}")
