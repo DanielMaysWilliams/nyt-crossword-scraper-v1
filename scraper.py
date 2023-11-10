@@ -43,6 +43,8 @@ print(driver.title)
 button = driver.find_element(By.ID, "comments-speech-bubble-header")
 button.click()
 
+time.sleep(5)
+
 comments = driver.find_elements(By.CLASS_NAME, "css-aa7djq")
 last_count = len(comments)
 while True:
