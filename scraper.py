@@ -75,7 +75,7 @@ for comment in comments:
         num_recs = 0
     comment_dict["recommends"].append(num_recs)
 
-    sentiment = sentiment_analyzer(text)[0]
+    sentiment = sentiment_analyzer(text, truncation=True, max_length=512)[0]
     comment_dict["label"].append(sentiment["label"])
     comment_dict["score"].append(sentiment["score"])
 
