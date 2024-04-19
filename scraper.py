@@ -1,13 +1,18 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service 
+import datetime
+import os
+import time
 
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from transformers import pipeline
-import pandas as pd
-import time
-import datetime
 
 start = time.time()
+
+OUTPUT_DIR = "comments"
+if not os.path.exists(OUTPUT_DIR):
+    os.mkdir(OUTPUT_DIR)
 
 chrome_service = Service()
 chrome_options = webdriver.ChromeOptions()
@@ -18,7 +23,7 @@ options = [
     "--ignore-certificate-errors",
     "--disable-extensions",
     "--no-sandbox",
-    "--disable-dev-shm-usage"
+    "--disable-dev-shm-usage",
 ]
 for option in options:
     chrome_options.add_argument(option)
@@ -26,7 +31,9 @@ for option in options:
 driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
 
-sentiment_analyzer = pipeline("text-classification", model="cardiffnlp/twitter-roberta-base-sentiment-latest")
+sentiment_analyzer = pipeline(
+    "text-classification", model="cardiffnlp/twitter-roberta-base-sentiment-latest"
+)
 
 # This script is run in a github action at 3:00 AM UTC, which is 10:00 PM EST the day before
 today = datetime.date.today() - datetime.timedelta(days=1)
@@ -70,7 +77,9 @@ for comment in comments:
     comment_dict["text"].append(text)
 
     try:
-        num_recs = int(comment.find_element(By.CLASS_NAME, "css-1ledvhd").text.split(" ")[0])
+        num_recs = int(
+            comment.find_element(By.CLASS_NAME, "css-1ledvhd").text.split(" ")[0]
+        )
     except ValueError:
         num_recs = 0
     comment_dict["recommends"].append(num_recs)
@@ -80,7 +89,7 @@ for comment in comments:
     comment_dict["score"].append(sentiment["score"])
 
 df = pd.DataFrame(comment_dict)
-df.to_csv(f"comments_{today:%Y-%m-%d}.csv", index=False)
+df.to_csv(f"{OUTPUT_DIR}/comments_{today:%Y-%m-%d}.csv", index=False)
 
 driver.quit()
 
