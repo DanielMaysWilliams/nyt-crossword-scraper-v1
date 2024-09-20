@@ -1,0 +1,4 @@
+text,recommends,label,score
+"Some of answers are being erased, is anybody else having this issue?",1,negative,0.6028794646263123
+"Very tricky - I repeatedly thought I wasn't going to be able to complete it, but then a foothold would appear... I understand why folks would feel like this was unsolvable, but I was ultimately able to finish it without any hints or googling.",39,negative,0.4843386709690094
+"This was my first puzzle where some gimmick squares were rebus and some not. That really threw me, but now that I'm on the lookout it should actually be fun next time.",76,positive,0.38344231247901917
