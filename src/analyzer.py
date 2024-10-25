@@ -1,9 +1,14 @@
 import argparse
 import datetime
 import json
+import logging
+import os
 from typing import Any
 
 from transformers import pipeline
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
 
 
 def valid_date(s: str) -> datetime.datetime:
@@ -15,6 +20,7 @@ def valid_date(s: str) -> datetime.datetime:
 
 def main(puzzle_date: datetime.date):
     filename = f"comments/comments-{puzzle_date:%Y-%m-%d}.json"
+    logger.info(f"Analyzing comments from file {filename}")
 
     with open(filename, "r") as f:
         comments = json.load(f)
@@ -26,7 +32,7 @@ def main(puzzle_date: datetime.date):
     )
 
     for i, comment in enumerate(comments):
-        print(f"Analyzing comment {comment["commentID"]}")
+        logger.info(f"Analyzing comment {comment["commentID"]}")
         analyzer: Any = sentiment_analyzer(
             comment["commentBody"],
             truncation=True,

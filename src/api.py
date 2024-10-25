@@ -1,20 +1,23 @@
 import argparse
 import datetime
 import json
-from pathlib import Path
+import logging
+import os
 import random
 import time
+from pathlib import Path
 from typing import Any
 
 import requests
 
 API_URL = "https://www.nytimes.com/svc/community/V3/requestHandler"
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
+
 
 class PuzzleCommentScraper:
-    def __init__(
-        self, puzzle_date: datetime.date, max_requests: int = 10, api_url: str = API_URL
-    ) -> None:
+    def __init__(self, puzzle_date: datetime.date, max_requests: int = 10, api_url: str = API_URL) -> None:
         self.puzzle_date = puzzle_date
         self.max_requests = max_requests
         self.api_url = api_url
@@ -22,7 +25,10 @@ class PuzzleCommentScraper:
         self.output_file = Path(f"comments/comments-{puzzle_date:%Y-%m-%d}.json")
 
         self.params: dict[str, Any] = {
-            "url": f"https://www.nytimes.com/{puzzle_date - datetime.timedelta(days=1):%Y/%m/%d}/crosswords/daily-puzzle-{puzzle_date:%Y-%m-%d}.html",
+            "url": (
+                f"https://www.nytimes.com/{puzzle_date - datetime.timedelta(days=1):%Y/%m/%d}/"
+                f"crosswords/daily-puzzle-{puzzle_date:%Y-%m-%d}.html"
+            ),
             "method": "get",
             "commentSequence": 0,
             "offset": 0,
@@ -44,19 +50,23 @@ class PuzzleCommentScraper:
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
             "TE": "trailers",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                "(KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246"
+            ),
         }
 
         self.comments: list[dict[str, Any]] = []
         self.replies: list[dict[str, Any]] = []
 
     def get_all_parent_comments(self) -> list[dict[str, Any]]:
+        logger.info(f"Beginning scraping parent comments {self.params["url"]}")
         request_count = 0
 
         # do first request
         response = requests.get(self.api_url, params=self.params, headers=self.headers)
         request_count += 1
-        print(response.status_code)
+        logger.info(f"Got status code {response.status_code}")
         response.raise_for_status()
 
         data: dict[str, Any] = response.json()
@@ -64,13 +74,9 @@ class PuzzleCommentScraper:
         self.comments.extend(data["results"]["comments"])
 
         totalParentCommentsFound: int = data["results"]["totalParentCommentsFound"]
-        totalParentCommentsReturned: int = data["results"][
-            "totalParentCommentsReturned"
-        ]
+        totalParentCommentsReturned: int = data["results"]["totalParentCommentsReturned"]
 
-        while (totalParentCommentsReturned < totalParentCommentsFound) and (
-            request_count < self.max_requests
-        ):
+        while (totalParentCommentsReturned < totalParentCommentsFound) and (request_count < self.max_requests):
             # Start from the last comment of the previous response
             self.params["commentSequence"] = self.comments[-1]["commentID"]
             self.params["offset"] = 25 * request_count
@@ -78,18 +84,14 @@ class PuzzleCommentScraper:
 
             time.sleep(0.5 + random.random())
 
-            response = requests.get(
-                self.api_url, params=self.params, headers=self.headers
-            )
-            print(response.status_code)
+            response = requests.get(self.api_url, params=self.params, headers=self.headers)
+            logger.info(f"Got status code {response.status_code}")
             response.raise_for_status()
 
             data = response.json()
             self.comments.extend(data["results"]["comments"])
 
-            totalParentCommentsReturned += data["results"][
-                "totalParentCommentsReturned"
-            ]
+            totalParentCommentsReturned += data["results"]["totalParentCommentsReturned"]
 
             request_count += 1
 
@@ -99,10 +101,11 @@ class PuzzleCommentScraper:
         return self.comments
 
     def pop_and_get_all_replies(self):
+        logger.info(f"Beginning scraping replies {self.params["url"]}")
         for comment in self.comments:
             comment_replies = []
             if len(comment["replies"]) < comment["replyCount"]:
-                print(f"Getting more comments for commentID={comment["commentID"]}")
+                logger.info(f"Getting more replies for commentID={comment["commentID"]}")
                 time.sleep(0.5 + random.random())
                 comment_params = {
                     "url": self.params["url"],
@@ -112,10 +115,8 @@ class PuzzleCommentScraper:
                     "limit": "25",
                     "cmd": "GetRepliesBySequence",
                 }
-                response = requests.get(
-                    self.api_url, params=comment_params, headers=self.headers
-                )
-                print(response.status_code)
+                response = requests.get(self.api_url, params=comment_params, headers=self.headers)
+                logger.info(f"Got status code {response.status_code}")
                 response.raise_for_status()
 
                 data = response.json()
@@ -137,16 +138,18 @@ class PuzzleCommentScraper:
 def main(puzzle_date: datetime.date, max_requests: int = 10):
     scraper = PuzzleCommentScraper(puzzle_date, max_requests)
 
+    logger.info(f"Initialized scraper for URL {scraper.params["url"]}")
+
     try:
         scraper.get_all_parent_comments()
     except requests.HTTPError as e:
-        print(f"Got HTTPError {e.response} while reading parent comments, touching output file and exiting...")
+        logger.error(f"Got HTTPError {e.response} while reading parent comments, touching output file and exiting...")
         scraper.output_file.touch()
         raise e
     try:
         scraper.pop_and_get_all_replies()
     except requests.HTTPError as e:
-        print(f"Got HTTPError {e.response} while reading replies, touching output file and exiting...")
+        logger.error(f"Got HTTPError {e.response} while reading replies, touching output file and exiting...")
         scraper.output_file.touch()
         raise e
     scraper.write_to_json()

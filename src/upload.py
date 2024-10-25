@@ -1,11 +1,12 @@
 import argparse
 import datetime
+import logging
 import os
 
-from dotenv import load_dotenv
 import duckdb
 
-load_dotenv()
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
 
 
 def valid_date(s: str) -> datetime.datetime:
@@ -16,6 +17,7 @@ def valid_date(s: str) -> datetime.datetime:
 
 
 def main(puzzle_date: datetime.date):
+    logger.info(f"Beginning uploading comments from date {puzzle_date}")
     con = duckdb.connect()
     con.sql(f"""
     CREATE OR REPLACE SECRET (
@@ -31,6 +33,7 @@ def main(puzzle_date: datetime.date):
     COPY (from 'comments/comments-{puzzle_date:%Y-%m-%d}.json') 
     TO 's3://nyt-comments/comments-{puzzle_date:%Y-%m-%d}.parquet'
     """)
+    logger.info(f"Finished uploading comments from date {puzzle_date}")
 
 
 if __name__ == "__main__":
