@@ -6,7 +6,11 @@ import os
 import duckdb
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO").upper())
+logging.basicConfig(
+    format="%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
+    datefmt="%Y-%m-%d:%H:%M:%S",
+    level=os.environ.get("LOGLEVEL", "INFO").upper(),
+)
 
 
 def valid_date(s: str) -> datetime.datetime:
