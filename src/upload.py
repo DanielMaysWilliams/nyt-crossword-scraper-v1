@@ -4,6 +4,7 @@ import logging
 import os
 
 import duckdb
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -11,6 +12,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d:%H:%M:%S",
     level=os.environ.get("LOGLEVEL", "INFO").upper(),
 )
+
+load_dotenv()
 
 
 def valid_date(s: str) -> datetime.datetime:

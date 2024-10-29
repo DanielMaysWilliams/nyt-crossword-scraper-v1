@@ -1,3 +1,17 @@
+[project]
+name = "nyt-crossword-scraper"
+version = "0.1.0"
+description = "Scrape, analyze, and upload NY Times crossword comments"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.1.2",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
+    "torch>=2.5.0",
+    "transformers>=4.46.1",
+]
+
 [tool.ruff]
 # Set the maximum line length to 120.
 line-length = 120
